@@ -20,7 +20,6 @@ public class Connection {
     private Context context = null;
     private String urlString = "";
     private ConnectionParams connectionParams;
-    ProgressDialog progressDialog = null;
 
     /**
      * By default request type is GET
@@ -56,15 +55,6 @@ public class Connection {
             new AsyncTask<String, String, String>() {
 
                 String responseMessage = "";
-
-                @Override
-                protected void onPreExecute() {
-                    super.onPreExecute();
-                    /*progressDialog = new ProgressDialog(context);
-                    progressDialog.setMessage("Loading...");
-                    progressDialog.setCancelable(true);
-                    progressDialog.show();*/
-                }
 
                 @Override
                 protected String doInBackground(String... strings) {
@@ -111,8 +101,11 @@ public class Connection {
                         return "failed";
                     } catch (IOException e) {
                         e.printStackTrace();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        return "failed";
                     }
-                    return null;
+                    return "failed";
                 }
 
                 @Override
@@ -124,17 +117,6 @@ public class Connection {
                     } else {
                         requestComplete.onFailure(responseMessage);
                     }
-
-                    Handler handler = new Handler();
-                    Runnable runnable = new Runnable() {
-
-                        @Override
-                        public void run() {
-                            //progressDialog.dismiss();
-                        }
-                    };
-
-                    handler.postDelayed(runnable, 1000);
                 }
             }.execute();
         }
