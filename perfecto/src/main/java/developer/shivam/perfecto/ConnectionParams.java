@@ -17,7 +17,19 @@ public class ConnectionParams {
 
     public Connection ofTypePost(JSONObject data){
         connection.setRequestType("POST");
-        connection.setPostData(data.toString());
+        connection.setJsonData(data.toString());
+        return connection;
+    }
+
+    public Connection ofTypePut(JSONObject data){
+        connection.setRequestType("PUT");
+        connection.setJsonData(data.toString());
+        return connection;
+    }
+
+    public Connection ofTypeDelete(JSONObject data){
+        connection.setRequestType("DELETE");
+        connection.setJsonData(data.toString());
         return connection;
     }
 }
