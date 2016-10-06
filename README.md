@@ -26,6 +26,13 @@
             });
 ```
 
+## Install
+```
+dependencies {
+    compile 'com.github.developer-shivam:Perfecto:1.*'
+}
+```
+
 ## License
 Copyright (c) 2016 Shivam Satija
 

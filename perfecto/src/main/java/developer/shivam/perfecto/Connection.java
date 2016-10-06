@@ -1,9 +1,7 @@
 package developer.shivam.perfecto;
 
-import android.app.ProgressDialog;
 import android.content.Context;
 import android.os.AsyncTask;
-import android.os.Handler;
 import android.util.Log;
 
 import java.io.BufferedOutputStream;
@@ -25,7 +23,7 @@ public class Connection {
      * By default request type is GET
      */
     private String requestType = "GET";
-    private String postData = "";
+    private String jsonData = "";
 
     public Connection(Context context) {
 
@@ -68,24 +66,27 @@ public class Connection {
                             connection.setReadTimeout(5000);
                             connection.setConnectTimeout(5000);
 
-                        } else if (getRequestType().equals("POST")) {
+                        } else if (getRequestType().equals("POST")
+                                || getRequestType().equals("PUT")
+                                || getRequestType().equals("UPDATE")) {
                             connection.setReadTimeout(5000);
                             connection.setConnectTimeout(5000);
 
                             connection.setDoInput(true);
                             connection.setDoOutput(true);
 
-                            connection.setFixedLengthStreamingMode(getPostData().getBytes().length);
+                            connection.setFixedLengthStreamingMode(getJsonData().getBytes().length);
                             connection.setRequestProperty("Content-type", "application/json");
 
                             OutputStream os = new BufferedOutputStream(connection.getOutputStream());
-                            os.write(getPostData().getBytes());
+                            os.write(getJsonData().getBytes());
                             os.flush();
                         }
 
                         connection.connect();
 
-                        if (connection.getResponseCode() == 200) {
+                        // For 2XX response codes
+                        if (connection.getResponseCode()/100==2) {
                             responseMessage = ConvertInputStream.toString(connection.getInputStream());
                             return "success";
                         } else {
@@ -130,11 +131,11 @@ public class Connection {
         this.requestType = requestType;
     }
 
-    public void setPostData(String data){
-        this.postData = data;
+    public void setJsonData(String data){
+        this.jsonData = data;
     }
 
-    public String getPostData() {
-        return postData;
+    public String getJsonData() {
+        return jsonData;
     }
 }
