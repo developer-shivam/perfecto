@@ -68,7 +68,7 @@ public class Connection {
 
                         } else if (getRequestType().equals("POST")
                                 || getRequestType().equals("PUT")
-                                || getRequestType().equals("UPDATE")) {
+                                || getRequestType().equals("DELETE")) {
                             connection.setReadTimeout(5000);
                             connection.setConnectTimeout(5000);
 
