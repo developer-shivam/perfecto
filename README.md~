@@ -27,15 +27,6 @@
 ```
 
 ## Install
-Add these lines in build.gradle at project leve
-```
-repositories {
-	jcenter()
-	maven { url "https://jitpack.io" }
-}
-```
-
-Add these lines in build.gradle at app level
 ```
 dependencies {
     compile 'com.github.developer-shivam:Perfecto:1.6'
