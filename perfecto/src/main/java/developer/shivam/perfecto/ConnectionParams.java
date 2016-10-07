@@ -32,4 +32,9 @@ public class ConnectionParams {
         connection.setJsonData(data.toString());
         return connection;
     }
+
+    public Connection withToasts(){
+        connection.setWithToasts(true);
+        return connection;
+    }
 }
