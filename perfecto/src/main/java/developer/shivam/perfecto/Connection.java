@@ -1,6 +1,8 @@
 package developer.shivam.perfecto;
 
 import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.util.Log;
 
@@ -11,6 +13,8 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.SocketTimeoutException;
 import java.net.URL;
+
+import javax.net.ssl.SSLException;
 
 public class Connection {
 
@@ -25,8 +29,7 @@ public class Connection {
     private String requestType = "GET";
     private String jsonData = "";
 
-    public Connection(Context context) {
-
+    Connection(Context context) {
         if (context == null) {
             Printer.writeError("Context cannot be null");
         } else {
@@ -34,7 +37,7 @@ public class Connection {
         }
     }
 
-    public void setSingletonInstance(Connection connection) {
+    void setSingletonInstance(Connection connection) {
         this.connection = connection;
     }
 
@@ -50,76 +53,100 @@ public class Connection {
             Printer.writeError("Empty url");
         } else {
 
-            new AsyncTask<String, String, String>() {
+            if (isNetworkAvailable()) {
 
-                String responseMessage = "";
+                new AsyncTask<String, String, String>() {
 
-                @Override
-                protected String doInBackground(String... strings) {
-                    try {
-                        URL url = new URL(connection.urlString);
-                        Log.d("URL:", connection.urlString);
-                        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-                        connection.setRequestMethod(getRequestType());
+                    String responseMessage = "";
 
-                        if (getRequestType().equals("GET")) {
-                            connection.setReadTimeout(5000);
-                            connection.setConnectTimeout(5000);
+                    @Override
+                    protected String doInBackground(String... strings) {
 
-                        } else if (getRequestType().equals("POST")
-                                || getRequestType().equals("PUT")
-                                || getRequestType().equals("DELETE")) {
-                            connection.setReadTimeout(5000);
-                            connection.setConnectTimeout(5000);
+                        try {
+                            Printer.writeMessage(">>>>>>>>>>START OF NETWORK REQUEST>>>>>>>>>>");
+                            URL url = new URL(connection.urlString);
+                            Log.d("Connecting to:", connection.urlString);
+                            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                            connection.setRequestMethod(getRequestType());
 
-                            connection.setDoInput(true);
-                            connection.setDoOutput(true);
+                            if (getRequestType().equals("GET")) {
+                                connection.setReadTimeout(5000);
+                                connection.setConnectTimeout(5000);
 
-                            connection.setFixedLengthStreamingMode(getJsonData().getBytes().length);
-                            connection.setRequestProperty("Content-type", "application/json");
+                            } else if (getRequestType().equals("POST")
+                                    || getRequestType().equals("PUT")
+                                    || getRequestType().equals("DELETE")) {
+                                connection.setReadTimeout(5000);
+                                connection.setConnectTimeout(5000);
 
-                            OutputStream os = new BufferedOutputStream(connection.getOutputStream());
-                            os.write(getJsonData().getBytes());
-                            os.flush();
-                        }
+                                connection.setDoInput(true);
+                                connection.setDoOutput(true);
 
-                        connection.connect();
+                                connection.setFixedLengthStreamingMode(getJsonData().getBytes().length);
+                                connection.setRequestProperty("Content-type", "application/json");
 
-                        // For 2XX response codes
-                        if (connection.getResponseCode()/100==2) {
-                            responseMessage = ConvertInputStream.toString(connection.getInputStream());
-                            return "success";
-                        } else {
-                            responseMessage = connection.getErrorStream().toString() + " " + connection.getResponseMessage() + " " + connection.getResponseCode();
+                                OutputStream os = new BufferedOutputStream(connection.getOutputStream());
+                                os.write(getJsonData().getBytes());
+                                os.flush();
+                            }
+
+                            Log.d("Request type:", getRequestType());
+                            Log.d("Read timeout:", String.valueOf(connection.getReadTimeout()) + "milliseconds");
+                            Log.d("Connection timeout:", String.valueOf(connection.getConnectTimeout()) + "milliseconds");
+
+                            if (isNetworkAvailable()) {
+                                connection.connect();
+                                return "failed";
+                            }
+
+                            // For 2XX response codes
+                            if (connection.getResponseCode() / 100 == 2) {
+                                responseMessage = ConvertInputStream.toString(connection.getInputStream());
+                                return "success";
+                            } else {
+                                responseMessage = connection.getErrorStream().toString() + " " + connection.getResponseMessage() + " " + connection.getResponseCode();
+                                return "failed";
+                            }
+
+                        } catch (MalformedURLException e) {
+                            responseMessage = e.getMessage();
+                            e.printStackTrace();
+                            return "failed";
+                        } catch (SSLException e) {
+                            responseMessage = e.getMessage();
+                            e.printStackTrace();
+                            return "failed";
+                        } catch (SocketTimeoutException e) {
+                            responseMessage = e.getMessage();
+                            e.printStackTrace();
+                            return "failed";
+                        } catch (IOException e) {
+                            responseMessage = e.getMessage();
+                            e.printStackTrace();
+                            return "failed";
+                        } catch (Exception e) {
+                            responseMessage = e.getMessage();
+                            e.printStackTrace();
                             return "failed";
                         }
-
-                    } catch (MalformedURLException e) {
-                        e.printStackTrace();
-                        return "failed";
-                    } catch (SocketTimeoutException e) {
-                        e.printStackTrace();
-                        return "failed";
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        return "failed";
                     }
-                    return "failed";
-                }
 
-                @Override
-                protected void onPostExecute(String s) {
-                    super.onPostExecute(s);
+                    @Override
+                    protected void onPostExecute(String s) {
+                        super.onPostExecute(s);
 
-                    if (s.equals("success")) {
-                        requestComplete.onSuccess(responseMessage);
-                    } else {
-                        requestComplete.onFailure(responseMessage);
+                        if (s.equals("success")) {
+                            Printer.writeMessage(">>>>>>>>>>END OF NETWORK REQUEST>>>>>>>>>>");
+                            requestComplete.onSuccess(responseMessage);
+                        } else {
+                            Printer.writeMessage(">>>>>>>>>>END OF NETWORK REQUEST>>>>>>>>>>");
+                            requestComplete.onFailure(responseMessage);
+                        }
                     }
-                }
-            }.execute();
+                }.execute();
+            } else {
+                requestComplete.onFailure("Not connected to internet");
+            }
         }
     }
 
@@ -137,5 +164,12 @@ public class Connection {
 
     public String getJsonData() {
         return jsonData;
+    }
+
+    private boolean isNetworkAvailable() {
+        ConnectivityManager connectivityManager
+                = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
     }
 }
