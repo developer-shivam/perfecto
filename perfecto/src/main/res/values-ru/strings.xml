@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">Perfecto</string>
+
+    <string name="network_error">Нет соединения с сетью.</string>
+    <string name="malformed_url">Упс… Внутренняя ошибка приложения.</string>
+    <string name="ssl_error">Не удалось создать защищённое соединение.</string>
+    <string name="socket_timeout_error">Истекло время ожидания.</string>
+    <string name="io_error">Ошибка соединения с сервером.</string>
+    <string name="error">Неизвестная ошибка.</string>
+    <string name="server_error">Внутренняя ошибка сервера.</string>
+</resources>

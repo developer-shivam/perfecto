@@ -1,5 +1,6 @@
 package developer.shivam.perfecto;
 
+import android.accounts.NetworkErrorException;
 import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -29,6 +30,8 @@ public class Connection {
     private String requestType = "GET";
     private String jsonData = "";
 
+    private boolean withToasts = false;
+
     Connection(Context context) {
         if (context == null) {
             Printer.writeError("Context cannot be null");
@@ -48,7 +51,7 @@ public class Connection {
         return connectionParams;
     }
 
-    public void connect(final OnRequestComplete requestComplete){
+    public void connect(final OnRequestComplete requestComplete) {
         if (connection.urlString.equals("")) {
             Printer.writeError("Empty url");
         } else {
@@ -105,28 +108,24 @@ public class Connection {
                                 return "success";
                             } else {
                                 responseMessage = connection.getErrorStream().toString() + " " + connection.getResponseMessage() + " " + connection.getResponseCode();
+                                Printer.toastError(context, R.string.server_error);
                                 return "failed";
                             }
 
                         } catch (MalformedURLException e) {
-                            responseMessage = e.getMessage();
-                            e.printStackTrace();
+                            responseMessage = handleError(e);
                             return "failed";
                         } catch (SSLException e) {
-                            responseMessage = e.getMessage();
-                            e.printStackTrace();
+                            responseMessage = handleError(e);
                             return "failed";
                         } catch (SocketTimeoutException e) {
-                            responseMessage = e.getMessage();
-                            e.printStackTrace();
+                            responseMessage = handleError(e);
                             return "failed";
                         } catch (IOException e) {
-                            responseMessage = e.getMessage();
-                            e.printStackTrace();
+                            responseMessage = handleError(e);
                             return "failed";
                         } catch (Exception e) {
-                            responseMessage = e.getMessage();
-                            e.printStackTrace();
+                            responseMessage = handleError(e);
                             return "failed";
                         }
                     }
@@ -145,9 +144,31 @@ public class Connection {
                     }
                 }.execute();
             } else {
+                Printer.toastError(context, R.string.network_error);
                 requestComplete.onFailure("Not connected to internet");
             }
         }
+    }
+
+    private String handleError(Exception e) {
+        e.printStackTrace();
+        if (withToasts) {
+            if (e instanceof NetworkErrorException) {
+                Printer.toastError(context, R.string.network_error);
+            } else if (e instanceof MalformedURLException) {
+                Printer.toastError(context, R.string.malformed_url);
+            } else if (e instanceof SSLException) {
+                Printer.toastError(context, R.string.ssl_error);
+            } else if (e instanceof SocketTimeoutException) {
+                Printer.toastError(context, R.string.socket_timeout_error);
+            } else if (e instanceof IOException) {
+                Printer.toastError(context, R.string.io_error);
+            } else {
+                Printer.toastError(context, R.string.error);
+            }
+
+        }
+        return e.getMessage();
     }
 
     public String getRequestType() {
@@ -158,7 +179,7 @@ public class Connection {
         this.requestType = requestType;
     }
 
-    public void setJsonData(String data){
+    public void setJsonData(String data) {
         this.jsonData = data;
     }
 
@@ -171,5 +192,9 @@ public class Connection {
                 = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
         return activeNetworkInfo != null && activeNetworkInfo.isConnected();
+    }
+
+    void setWithToasts(boolean withToasts) {
+        this.withToasts = withToasts;
     }
 }

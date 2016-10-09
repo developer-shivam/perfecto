@@ -1,3 +1,11 @@
 <resources>
     <string name="app_name">Perfecto</string>
+
+    <string name="network_error">Not connected to the network.</string>
+    <string name="malformed_url">Ooops… Internal application error.</string>
+    <string name="ssl_error">Unable to create secured connection.</string>
+    <string name="socket_timeout_error">Connection timed out.</string>
+    <string name="io_error">Failed to connect to the server.</string>
+    <string name="error">Unknown error.</string>
+    <string name="server_error">Server error.</string>
 </resources>
