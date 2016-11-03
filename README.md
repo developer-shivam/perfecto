@@ -1,32 +1,34 @@
-#Perfecto - Networking library
+#perfecto - Network request with ease.
 
 [![License](https://img.shields.io/badge/License-Apache%202-blue.svg)](http://www.apache.org/licenses/LICENSE-2.0.html)
 
 ## Use Case for "GET" Request
 ```java
-				
-		Perfecto.with(context)
-            .fromUrl("https://www.google.co.in")
-            .ofTypeGet()
-            .connect(new OnRequestComplete() {
-               
-                @Override
-                public void onSuccess(String response) {
-                    Log.d("Response", response);    
-                }
+Perfecto.with(MainActivity.this)
+	.fromUrl("http://www.google.com")
+	.ofTypeGet()
+	.connect(new OnNetworkRequest() {
 
-                @Override
-                public void onFailure(String error) {
-                    /**
-                    *  This will return the errorStream(), responseCode and responseMessage
-                    *  Use Log to get the error.
-                    */
-                      
-                }
-            });
+        @Override
+        public void onStart() {
+
+        }
+
+        @Override
+        public void onSuccess(String response) {
+            Log.d("Response", response);
+        }
+
+        @Override
+        public void onFailure(int responseCode, String responseMessage, String errorStream) {
+            Log.d("Response code", String.valueOf(responseCode));
+            Log.d("Response message", responseMessage);
+            Log.d("Error stream", errorStream);
+            }
+	    });
 ```
 
-## Install
+## Integration
 Add these lines in build.gradle at project leve
 ```
 repositories {
@@ -38,7 +40,7 @@ repositories {
 Add these lines in build.gradle at app level
 ```
 dependencies {
-    compile 'com.github.developer-shivam:Perfecto:1.6'
+    compile 'com.github.developer-shivam:perfecto:1.0.0'
 }
 ```
 
