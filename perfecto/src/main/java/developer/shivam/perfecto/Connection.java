@@ -20,14 +20,13 @@ import javax.net.ssl.SSLException;
 public class Connection {
 
     private Connection connection = null;
-    private Context context = null;
+    private Context mContext = null;
     private String urlString = "";
-    private ConnectionParams connectionParams;
 
     /**
      * By default request type is GET
      */
-    private String requestType = "GET";
+    private String requestType = RequestType.GET;
     private String jsonData = "";
 
     private boolean withToasts = false;
@@ -36,7 +35,7 @@ public class Connection {
         if (context == null) {
             Printer.writeError("Context cannot be null");
         } else {
-            this.context = context;
+            this.mContext = context;
         }
     }
 
@@ -46,21 +45,21 @@ public class Connection {
 
     public ConnectionParams fromUrl(String url) {
         connection.urlString = url;
-        connectionParams = new ConnectionParams();
+        ConnectionParams connectionParams = new ConnectionParams();
         connectionParams.setConnectionInstance(connection);
         return connectionParams;
     }
 
-    public void connect(final OnRequestComplete requestComplete) {
-        if (connection.urlString.equals("")) {
-            Printer.writeError("Empty url");
+    public void connect(final OnNetworkRequest requestComplete) {
+        if (connection.urlString.equals("") || connection.urlString == null) {
+            Printer.writeError("URL cannot be empty");
         } else {
-
             if (isNetworkAvailable()) {
-
                 new AsyncTask<String, String, String>() {
 
                     String responseMessage = "";
+                    String errorStream = "";
+                    int responseCode = 0;
 
                     @Override
                     protected String doInBackground(String... strings) {
@@ -72,15 +71,15 @@ public class Connection {
                             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                             connection.setRequestMethod(getRequestType());
 
-                            if (getRequestType().equals("GET")) {
-                                connection.setReadTimeout(5000);
-                                connection.setConnectTimeout(5000);
+                            if (getRequestType().equals(RequestType.GET)) {
+                                connection.setReadTimeout(10000);
+                                connection.setConnectTimeout(10000);
 
-                            } else if (getRequestType().equals("POST")
-                                    || getRequestType().equals("PUT")
-                                    || getRequestType().equals("DELETE")) {
-                                connection.setReadTimeout(5000);
-                                connection.setConnectTimeout(5000);
+                            } else if (getRequestType().equals(RequestType.POST)
+                                    || getRequestType().equals(RequestType.PUT)
+                                    || getRequestType().equals(RequestType.DELETE)) {
+                                connection.setReadTimeout(10000);
+                                connection.setConnectTimeout(10000);
 
                                 connection.setDoInput(true);
                                 connection.setDoOutput(true);
@@ -94,21 +93,22 @@ public class Connection {
                             }
 
                             Log.d("Request type:", getRequestType());
-                            Log.d("Read timeout:", String.valueOf(connection.getReadTimeout()) + "milliseconds");
-                            Log.d("Connection timeout:", String.valueOf(connection.getConnectTimeout()) + "milliseconds");
+                            Log.d("Read timeout:", String.valueOf(connection.getReadTimeout()) + " milliseconds");
+                            Log.d("Connection timeout:", String.valueOf(connection.getConnectTimeout()) + " milliseconds");
 
                             if (isNetworkAvailable()) {
                                 connection.connect();
                                 return "failed";
                             }
 
-                            // For 2XX response codes
                             if (connection.getResponseCode() / 100 == 2) {
+                                responseCode = connection.getResponseCode();
                                 responseMessage = ConvertInputStream.toString(connection.getInputStream());
                                 return "success";
                             } else {
-                                responseMessage = connection.getErrorStream().toString() + " " + connection.getResponseMessage() + " " + connection.getResponseCode();
-                                Printer.toastError(context, R.string.server_error);
+                                responseCode = connection.getResponseCode();
+                                responseMessage = connection.getResponseMessage();
+                                errorStream = connection.getErrorStream().toString();
                                 return "failed";
                             }
 
@@ -139,35 +139,32 @@ public class Connection {
                             requestComplete.onSuccess(responseMessage);
                         } else {
                             Printer.writeMessage(">>>>>>>>>>END OF NETWORK REQUEST>>>>>>>>>>");
-                            requestComplete.onFailure(responseMessage);
+                            requestComplete.onFailure(responseCode, responseMessage, errorStream);
                         }
                     }
                 }.execute();
             } else {
-                Printer.toastError(context, R.string.network_error);
-                requestComplete.onFailure("Not connected to internet");
+                requestComplete.onFailure(0, "No connected to network", "No internet connection available");
             }
         }
     }
 
     private String handleError(Exception e) {
         e.printStackTrace();
-        if (withToasts) {
-            if (e instanceof NetworkErrorException) {
-                Printer.toastError(context, R.string.network_error);
-            } else if (e instanceof MalformedURLException) {
-                Printer.toastError(context, R.string.malformed_url);
-            } else if (e instanceof SSLException) {
-                Printer.toastError(context, R.string.ssl_error);
-            } else if (e instanceof SocketTimeoutException) {
-                Printer.toastError(context, R.string.socket_timeout_error);
-            } else if (e instanceof IOException) {
-                Printer.toastError(context, R.string.io_error);
-            } else {
-                Printer.toastError(context, R.string.error);
-            }
-
+        if (e instanceof NetworkErrorException) {
+            Printer.writeError("NetworkErrorException", mContext, R.string.network_error);
+        } else if (e instanceof MalformedURLException) {
+            Printer.writeError("MalformedURLException", mContext, R.string.malformed_url);
+        } else if (e instanceof SSLException) {
+            Printer.writeError("SSLException", mContext, R.string.ssl_error);
+        } else if (e instanceof SocketTimeoutException) {
+            Printer.writeError("SocketTimeoutException", mContext, R.string.socket_timeout_error);
+        } else if (e instanceof IOException) {
+            Printer.writeError("IOException", mContext, R.string.io_error);
+        } else {
+            Printer.writeError("UnknownError", mContext, R.string.error);
         }
+
         return e.getMessage();
     }
 
@@ -189,12 +186,9 @@ public class Connection {
 
     private boolean isNetworkAvailable() {
         ConnectivityManager connectivityManager
-                = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+                = (ConnectivityManager) mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
         return activeNetworkInfo != null && activeNetworkInfo.isConnected();
     }
 
-    void setWithToasts(boolean withToasts) {
-        this.withToasts = withToasts;
-    }
 }

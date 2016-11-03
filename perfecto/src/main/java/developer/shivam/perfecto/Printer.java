@@ -13,7 +13,7 @@ public class Printer {
     }
 
     // Context used as method arg instead of static field due to possible memory leaks
-    static void toastError(Context context, int messageResourceId){
+    static void writeError(Context context, int messageResourceId){
         if (currentToast!=null) currentToast.cancel();
         currentToast = Toast.makeText(context, context.getString(messageResourceId), Toast.LENGTH_LONG);
         currentToast.show();
@@ -21,5 +21,9 @@ public class Printer {
 
     public static void writeError(String error) {
         Log.d("Error", error);
+    }
+
+    public static void writeError(String error, Context mContext, int messageResourceId) {
+        Log.d(error, mContext.getString(messageResourceId));
     }
 }
