@@ -24,8 +24,8 @@ Perfecto.with(MainActivity.this)
             Log.d("Response code", String.valueOf(responseCode));
             Log.d("Response message", responseMessage);
             Log.d("Error stream", errorStream);
-            }
-	    });
+        }
+	});
 ```
 
 ## Integration
