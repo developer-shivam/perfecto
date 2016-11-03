@@ -29,8 +29,6 @@ public class Connection {
     private String requestType = RequestType.GET;
     private String jsonData = "";
 
-    private boolean withToasts = false;
-
     Connection(Context context) {
         if (context == null) {
             Printer.writeError("Context cannot be null");
@@ -96,12 +94,11 @@ public class Connection {
                             Log.d("Read timeout:", String.valueOf(connection.getReadTimeout()) + " milliseconds");
                             Log.d("Connection timeout:", String.valueOf(connection.getConnectTimeout()) + " milliseconds");
 
-                            if (isNetworkAvailable()) {
-                                connection.connect();
+                            if (!isNetworkAvailable()) {
                                 return "failed";
                             }
 
-                            if (connection.getResponseCode() / 100 == 2) {
+                            if (connection.getResponseCode() == 200) {
                                 responseCode = connection.getResponseCode();
                                 responseMessage = ConvertInputStream.toString(connection.getInputStream());
                                 return "success";
@@ -133,7 +130,6 @@ public class Connection {
                     @Override
                     protected void onPostExecute(String s) {
                         super.onPostExecute(s);
-
                         if (s.equals("success")) {
                             Printer.writeMessage(">>>>>>>>>>END OF NETWORK REQUEST>>>>>>>>>>");
                             requestComplete.onSuccess(responseMessage);
